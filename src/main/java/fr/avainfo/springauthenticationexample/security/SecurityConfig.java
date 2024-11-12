@@ -21,10 +21,8 @@ public class SecurityConfig {
 						.requestMatchers("/api/private/user").hasRole("UPPER_USER")
 						.anyRequest().authenticated()
 				)
-				.formLogin(form -> form.defaultSuccessUrl("/api/private"))
-				.exceptionHandling(exception -> exception
-						.accessDeniedHandler(new RoleAccessDeniedHandler())
-				);
+				.exceptionHandling(exception -> exception.accessDeniedPage("/api/v1/error"))
+				.formLogin(form -> form.defaultSuccessUrl("/api/private"));
 		return http.build();
 	}
 
