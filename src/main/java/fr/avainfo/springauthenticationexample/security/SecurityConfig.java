@@ -1,6 +1,7 @@
 package fr.avainfo.springauthenticationexample.security;
 
 import fr.avainfo.springauthenticationexample.handlers.RoleAccessDeniedHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,11 +9,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+	@Autowired
+	private DataSource dataSource;
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests(authorize -> authorize
@@ -28,18 +35,9 @@ public class SecurityConfig {
 
 	@Bean
 	public UserDetailsService userDetailsService() {
-		var user = User.withUsername("user")
-				.password("{noop}password")
-				.roles("USER")
-				.build();
-		var superUser = User.withUsername("SuperUser")
-				.password("{noop}password")
-				.roles("UPPER_USER")
-				.build();
-		var admin = User.withUsername("admin")
-				.password("{noop}admin123")
-				.roles("ADMIN")
-				.build();
-		return new InMemoryUserDetailsManager(user, superUser, admin);
+		JdbcUserDetailsManager userDetailsService = new JdbcUserDetailsManager(dataSource);
+		userDetailsService.setUsersByUsernameQuery("SELECT username, password, true FROM users WHERE username = ?");
+		userDetailsService.setAuthoritiesByUsernameQuery("SELECT username, role FROM roles WHERE username = ?");
+		return userDetailsService;
 	}
 }
